@@ -4,13 +4,7 @@ const Base64 = struct {
     _table: [64]u8,
 
     fn init() Base64 {
-        const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        const lower = "abcdefghijklmnopqrstuvwxyz";
-        const numbers_symb = "0123456789+/";
-        const obj = Base64{};
-        std.mem.copyForwards(u8, obj._table[0..26], upper);
-        std.mem.copyForwards(u8, obj._table[26..52], lower);
-        std.mem.copyForwards(u8, obj._table[52..64], numbers_symb);
+        const obj = Base64{ ._table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".* };
         return obj;
     }
 
@@ -22,7 +16,7 @@ const Base64 = struct {
 const base64 = Base64.init();
 
 pub fn encode(allocator: std.mem.Allocator, content: []const u8) ![]const u8 {
-    const buffer: []const u8 = allocator.alloc(u8, calculate_result_length(content.len));
+    const buffer: []u8 = try allocator.alloc(u8, calculate_result_length(content.len));
     var content_cur: usize = 0;
     var result_cur: usize = 0;
     while (content_cur < content.len) {
@@ -42,23 +36,25 @@ fn calculate_result_length(input_length: usize) usize {
     return length + 4;
 }
 
-fn encodeWindow(content: []const u8, result: []const u8) void {
+fn encodeWindow(content: []const u8, result: []u8) void {
     var count: usize = 0;
     var remainder_content: u8 = 0;
-    var remainder_length: u4 = 0;
+    var remainder_length: usize = 0;
+    // mapping all available character
     for (content) |c| {
-        var bit_count: u4 = 8 + remainder_length;
+        var bit_count: usize = 8 + remainder_length;
         while (bit_count >= 6) {
-            result[count] = ((c >> 2) >> remainder_length) | remainder_content;
+            result[count] = base64.lookup(((c >> 2) >> @truncate(remainder_length)) | remainder_content);
             remainder_length = (2 + remainder_length) % 8;
-            remainder_content = (c << (8 - remainder_length)) >> 2;
+            remainder_content = (c << @truncate(8 - remainder_length)) >> 2;
             bit_count -= 6;
             count += 1;
         }
     }
+    // mapping missing byte in result
     while (count < 4) {
         if (remainder_content != 0) {
-            result[count] = remainder_content;
+            result[count] = base64.lookup(remainder_content);
             remainder_content = 0;
         } else {
             result[count] = '=';
