@@ -1,8 +1,22 @@
-//! By convention, root.zig is the root source file when making a library. If
-//! you are making an executable, the convention is to delete this file and
-//! start with main.zig instead.
 const std = @import("std");
 const testing = std.testing;
+const expect = testing.expect;
+const encoder = @import("encoder.zig");
+const decoder = @import("decoder.zig");
 
-pub extern fn encode(allocator: std.mem.Allocator, byteArray: []const u8) []const u8;
-pub extern fn decode(allocator: std.mem.Allocator, byteArray: []const u8) []const u8;
+pub const encode = encoder.encode;
+pub const decode = decoder.decode;
+
+test "test encode" {
+    // prepare
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+
+    // act
+    const test1 = std.mem.eql(u8, try encode(allocator, "I'm testing base64 encoder"), "SSdtIHRlc3RpbmcgYmFzZTY0IGVuY29kZXI=");
+    const test2 = std.mem.eql(u8, try encode(allocator, "This one is encoded correctly. $@#$*@(===9+/"), "VGhpcyBvbmUgaXMgZW5jb2RlZCBjb3JyZWN0bHkuICRAIyQqQCg9PT05Ky8=");
+
+    // assert
+    try expect(test1);
+    try expect(test2);
+}
