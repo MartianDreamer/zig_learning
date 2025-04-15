@@ -13,7 +13,7 @@ pub fn decode(allocator: std.mem.Allocator, content: []const u8) ![]const u8 {
     return buffer;
 }
 
-pub const DecodingError = error{InvalidBase64String};
+pub const DecodingError = error{InvalidBase64Byte};
 
 fn decode_char(ch: u8) !u8 {
     if (ch >= 'a') {
@@ -27,7 +27,7 @@ fn decode_char(ch: u8) !u8 {
     } else if (ch == '/') {
         return 63;
     }
-    return DecodingError.InvalidBase64String;
+    return DecodingError.InvalidBase64Byte;
 }
 
 fn calculate_result_length(input: []const u8) usize {
