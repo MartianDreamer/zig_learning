@@ -37,28 +37,20 @@ fn calculate_result_length(input_length: usize) usize {
 }
 
 fn encodeWindow(content: []const u8, result: []u8) void {
-    var count: usize = 0;
     var remainder_content: u8 = 0;
     var remainder_length: usize = 0;
-    // mapping all available character
-    for (content) |c| {
-        var bit_count: usize = 8 + remainder_length;
-        while (bit_count >= 6) {
-            result[count] = base64.lookup(((c >> 2) >> @truncate(remainder_length)) | remainder_content);
+
+    for (0..4, 0..4) |i, j| {
+        if (j < content.len) {
+            const c: u8 = content[j];
+            result[i] = base64.lookup(((c >> 2) >> @truncate(remainder_length)) | remainder_content);
             remainder_length = (2 + remainder_length) % 8;
             remainder_content = (c << @truncate(8 - remainder_length)) >> 2;
-            bit_count -= 6;
-            count += 1;
-        }
-    }
-    // mapping missing byte in result
-    while (count < 4) {
-        if (remainder_content != 0) {
-            result[count] = base64.lookup(remainder_content);
-            remainder_content = 0;
+        } else if (remainder_length != 0) {
+            result[i] = base64.lookup(remainder_content);
+            remainder_length = 0;
         } else {
-            result[count] = '=';
+            result[i] = '=';
         }
-        count += 1;
     }
 }
