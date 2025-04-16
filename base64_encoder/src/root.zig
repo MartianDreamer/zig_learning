@@ -6,7 +6,6 @@ const decoder = @import("decoder.zig");
 
 pub const encode = encoder.encode;
 pub const decode = decoder.decode;
-pub const DecodingError = decoder.DecodingError;
 
 test "test encode" {
     // prepare
